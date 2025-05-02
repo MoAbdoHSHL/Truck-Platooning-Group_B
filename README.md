@@ -5,3 +5,7 @@ scenario)
 - Identify requirements
 - Identify timing behaviour
 - Model all scenarios using SysML / UML
+
+Mohamed Abdo: External Senario between tucks and Cars while driving
+Arya : safety between trucks
+Mustafa: 
