@@ -1,11 +1,7 @@
 # Truck-Platooning-Group_B
-Task-1:
-- Identify scenarios (each group member is reasonable for at least 1 
-scenario) 
-- Identify requirements
-- Identify timing behaviour
-- Model all scenarios using SysML / UML
+* Mohamed Abdo: Merging Truck Platooning on Highways Senario
+* Arya : safety scenarios between Trucks
+* Mustafa: 
 
-Mohamed Abdo: External Senario between tucks and Cars while driving
-Arya : safety between trucks
-Mustafa: 
+![Platooning](https://github.com/user-attachments/assets/a4157858-91a4-4000-8266-b599a5d34c74)
+Src: MathWorks
