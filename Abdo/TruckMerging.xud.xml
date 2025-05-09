@@ -161,11 +161,7 @@ int start_sent = 0;</declaration>
 			<label kind="assignment" x="280" y="16">t = 0</label>
 		</transition>
 	</template>
-	<system>MergingTruck = MergingTruck();
-PlatoonLeader = PlatoonLeader();
-FollowerTruck = FollowerTruck();
-
-system MergingTruck, PlatoonLeader, FollowerTruck;
+	<system>system MergingTruck, PlatoonLeader, FollowerTruck;
 </system>
 	<queries>
 		<query>
