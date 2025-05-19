@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+	<declaration>
+
+    const int SAFE_GAP  = 10;  
+    const int STOP_WAIT = 5;   
+
+    
+    int distance = 0;  
+    int gap      = 20; 
+
+   
+    broadcast chan lane;   
+    broadcast chan stop;   
+    broadcast chan resume; 
+  </declaration>
+	<template>
+		<name>Environment</name>
+		<location id="id0" x="0" y="0">
+			<name x="-51" y="-8">Pick</name>
+		</location>
+		<location id="id1" x="200" y="0">
+			<name x="229" y="-8">Wait</name>
+		</location>
+		<init ref="id0"/>
+		<transition id="id2">
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="select" x="14" y="-52">d:int[1,50], g:int[5,30]</label>
+			<label kind="assignment" x="14" y="-34">distance = d, gap = g</label>
+		</transition>
+		<transition id="id3">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="76" y="8">resume?</label>
+		</transition>
+	</template>
+	<template>
+		<name>Leader</name>
+		<declaration>
+clock t;   
+    </declaration>
+		<location id="id4" x="-93" y="-42">
+			<name x="-153" y="-51">Idle</name>
+		</location>
+		<location id="id5" x="365" y="-76">
+			<name x="391" y="-93">LaneChange</name>
+		</location>
+		<location id="id6" x="200" y="100">
+			<name x="221" y="85">EmergencyStop</name>
+			<label kind="invariant" x="229" y="102">t &lt;= STOP_WAIT</label>
+		</location>
+		<init ref="id4"/>
+		<transition id="id7">
+			<source ref="id4"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-161" y="-127">distance &gt; 35</label>
+			<label kind="synchronisation" x="-127" y="-110">resume!</label>
+			<nail x="-123" y="-72"/>
+			<nail x="-63" y="-72"/>
+		</transition>
+		<transition id="id8">
+			<source ref="id4"/>
+			<target ref="id5"/>
+			<label kind="guard" x="8" y="-119">(distance &gt; 15) &amp;&amp; (distance &lt;= 35)</label>
+			<label kind="synchronisation" x="127" y="-102">lane!</label>
+		</transition>
+		<transition id="id9">
+			<source ref="id4"/>
+			<target ref="id6"/>
+			<label kind="guard" x="-51" y="42">distance &lt;= 15</label>
+			<label kind="synchronisation" x="59" y="59">stop!</label>
+			<label kind="assignment" x="59" y="76">t = 0</label>
+		</transition>
+		<transition id="id10">
+			<source ref="id6"/>
+			<target ref="id5"/>
+			<label kind="guard" x="331" y="-8">t &gt;= STOP_WAIT</label>
+			<label kind="synchronisation" x="374" y="17">lane!</label>
+		</transition>
+		<transition id="id11">
+			<source ref="id5"/>
+			<target ref="id4"/>
+			<label kind="synchronisation" x="110" y="-51">resume!</label>
+		</transition>
+	</template>
+	<template>
+		<name>Follower</name>
+		<location id="id12" x="-68" y="-42">
+			<name x="-127" y="-51">Idle</name>
+		</location>
+		<location id="id13" x="200" y="-100">
+			<name x="221" y="-119">LaneChange</name>
+		</location>
+		<location id="id14" x="200" y="100">
+			<name x="221" y="85">EmergencyStop</name>
+		</location>
+		<init ref="id12"/>
+		<transition id="id15">
+			<source ref="id12"/>
+			<target ref="id13"/>
+			<label kind="synchronisation" x="20" y="-90">lane?</label>
+		</transition>
+		<transition id="id16">
+			<source ref="id13"/>
+			<target ref="id12"/>
+			<label kind="synchronisation" x="51" y="-68">resume?</label>
+		</transition>
+		<transition id="id17">
+			<source ref="id12"/>
+			<target ref="id14"/>
+			<label kind="synchronisation" x="34" y="59">stop?</label>
+		</transition>
+		<transition id="id18">
+			<source ref="id14"/>
+			<target ref="id13"/>
+			<label kind="synchronisation" x="204" y="-8">lane?</label>
+		</transition>
+		<transition id="id19">
+			<source ref="id12"/>
+			<target ref="id14"/>
+			<label kind="guard" x="-42" y="34">gap &lt; SAFE_GAP</label>
+		</transition>
+	</template>
+	<system>
+    env  = Environment();
+    lead = Leader();
+    f1   = Follower();
+    f2   = Follower();
+    system env, lead, f1, f2;
+  </system>
+	<queries>
+		<query>
+			<formula>A[] not deadlock</formula>
+			<comment>No deadlock</comment>
+		</query>
+		<query>
+			<formula>A[] (gap &lt; SAFE_GAP) imply (f1.FStop &amp;&amp; f2.FStop)</formula>
+			<comment>Safe gap enforced</comment>
+		</query>
+		<query>
+			<formula>A[] (lead.LStop imply lead.t &lt;= STOP_WAIT)</formula>
+			<comment>Emergency stop bounded</comment>
+		</query>
+	</queries>
+</nta>
