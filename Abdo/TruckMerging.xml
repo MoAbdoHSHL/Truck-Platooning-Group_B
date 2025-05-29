@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+	<declaration>// Timing &amp; gap safety parameters
+const int MAX_MERGE_TIME     = 10;
+const int MAX_RESPONSE_TIME  = 5;
+const int min_decel_time     = 3;
+const int SAFE_GAP           = 10;
+const int STOP_WAIT          = 5;
+
+// State variables
+int gap_ready = 0;   // 0 = no gap, 1 = opening, 2 = ready
+int gap       = 20;  // placeholder for actual measured gap
+int distance  = 0;   // can be used for optional safety checks
+
+// Synchronization channels (broadcast-based merging logic)
+broadcast chan merge_request;
+broadcast chan merge_ack;
+broadcast chan merge_done;
+broadcast chan open_gap;
+broadcast chan start_merge;
+</declaration>
+	<template>
+		<name>FollowerTruck</name>
+		<declaration>clock t;</declaration>
+		<location id="id0" x="-85" y="0">
+			<name x="-119" y="17">Idle</name>
+		</location>
+		<location id="id1" x="-85" y="-161">
+			<name x="-128" y="-204">Decelerating</name>
+		</location>
+		<location id="id2" x="221" y="-161">
+			<name x="178" y="-204">GapOpened</name>
+		</location>
+		<init ref="id0"/>
+		<transition id="id3">
+			<source ref="id2"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="229" y="-102">merge_done?</label>
+			<label kind="assignment" x="229" y="-85">gap_ready = 0</label>
+		</transition>
+		<transition id="id4">
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-8" y="-187">gap &gt;= SAFE_GAP</label>
+			<label kind="assignment" x="8" y="-161">gap_ready = 2</label>
+		</transition>
+		<transition id="id5">
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="-229" y="-102">open_gap?</label>
+			<label kind="assignment" x="-246" y="-76">t := 0, gap_ready = 1</label>
+		</transition>
+	</template>
+	<template>
+		<name>PlatoonLeader</name>
+		<declaration>clock t;
+
+</declaration>
+		<location id="id6" x="153" y="-17">
+			<name x="128" y="0">Waiting</name>
+		</location>
+		<location id="id7" x="-306" y="-17">
+			<name x="-350" y="0">Evaluating</name>
+		</location>
+		<location id="id8" x="-306" y="-297">
+			<name x="-332" y="-340">Idle</name>
+		</location>
+		<location id="id9" x="153" y="-297">
+			<name x="153" y="-331">Monitoring</name>
+		</location>
+		<init ref="id6"/>
+		<transition id="id10">
+			<source ref="id6"/>
+			<target ref="id8"/>
+			<label kind="guard" x="-288" y="-191">gap_ready == 1</label>
+			<label kind="synchronisation" x="-288" y="-174">open_gap!</label>
+		</transition>
+		<transition id="id11">
+			<source ref="id9"/>
+			<target ref="id8"/>
+			<label kind="synchronisation" x="-144" y="-314">merge_done?</label>
+			<label kind="assignment" x="-144" y="-289">gap_ready = 0</label>
+		</transition>
+		<transition id="id12">
+			<source ref="id6"/>
+			<target ref="id9"/>
+			<label kind="guard" x="153" y="-191">gap_ready == 2</label>
+			<label kind="synchronisation" x="153" y="-174">merge_ack!</label>
+		</transition>
+		<transition id="id13">
+			<source ref="id7"/>
+			<target ref="id6"/>
+			<label kind="synchronisation" x="-127" y="-42">merge_request?</label>
+			<label kind="assignment" x="-153" y="-8">gap_ready = 1</label>
+		</transition>
+		<transition id="id14">
+			<source ref="id8"/>
+			<target ref="id7"/>
+		</transition>
+	</template>
+	<template>
+		<name x="5" y="5">MergingTruck</name>
+		<declaration>clock t;          
+</declaration>
+		<location id="id15" x="433" y="16">
+			<name x="416" y="33">Idle</name>
+		</location>
+		<location id="id16" x="34" y="17">
+			<name x="-17" y="34">RequestSent</name>
+		</location>
+		<location id="id17" x="221" y="-238">
+			<name x="187" y="-289">Merging</name>
+		</location>
+		<init ref="id15"/>
+		<transition id="id18">
+			<source ref="id17"/>
+			<target ref="id15"/>
+			<label kind="synchronisation" x="348" y="-161">merge_done!</label>
+		</transition>
+		<transition id="id19">
+			<source ref="id16"/>
+			<target ref="id17"/>
+			<label kind="synchronisation" x="-8" y="-144">merge_ack?</label>
+		</transition>
+		<transition id="id20">
+			<source ref="id15"/>
+			<target ref="id16"/>
+			<label kind="synchronisation" x="195" y="-8">merge_request!</label>
+		</transition>
+	</template>
+	<system>system MergingTruck, PlatoonLeader, FollowerTruck;
+</system>
+	<queries>
+		<query>
+			<formula>A[] not deadlock
+E&lt;&gt; MergingTruck.Merging
+E&lt;&gt; FollowerTruck.GapOpened
+E&lt;&gt; PlatoonLeader.Monitoring
+</formula>
+			<comment/>
+		</query>
+	</queries>
+</nta>
