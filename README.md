@@ -1,7 +1,11 @@
-# Truck-Platooning-Group_B
-* Mohamed Abdo: Merging Truck Platooning on Highways Senario
-* Arya : safety scenarios between Trucks
-* Mustafa: Rr orgranization due to re routing
-
-![Platooning](https://github.com/user-attachments/assets/a4157858-91a4-4000-8266-b599a5d34c74)
-Src: MathWorks
+# Truck-Platooning && SVM Group_B
+## 1) Platooning Scenarios:  
+- Mohamed Abdo: Merging Truck on Highways 
+- Arya : Safety scenarios between Trucks
+- Mustafa: Reorganization due to rerouting
+## 
+## 2) SVM model:
+   - Data filtering with CV2 & numpy
+   - Classifing lane position to (-1) left; (0) Straight; (1) right#
+   - Generating 20% Test && 80% train
+   - Train SVM model with Linear Kernel 
