@@ -30,8 +30,16 @@ THROTTLE        = 0.5          # constant forward throttle (0..1)
 DEFAULT_STEER   = 0.0          # fallback if no camera frame yet
 PRINT_EVERY_N   = 30           # console frames between logs
 # -----------------------------------------------------------------------------
-
+# Convert CARLA image to OpenCV BGR image
+def carla_image_to_cv2(img):
+    array = np.frombuffer(img.raw_data, dtype=np.uint8)
+    array = array.reshape((img.height, img.width, 4))  # BGRA format
+    bgr_image = array[:, :, :3]  # Drop alpha channel
+    return bgr_image
 def extract_features(image):
+
+    image = carla_image_to_cv2(image)
+
     h, w, _ = image.shape
     bottom_half = image[h//2:, :]
     hsv = cv2.cvtColor(bottom_half, cv2.COLOR_BGR2HSV)
