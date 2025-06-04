@@ -19,7 +19,7 @@ import math
 import joblib
 import numpy as np
 import os
-
+import cv2
 
 # ------------------------ CONFIGURATION --------------------------------------
 HOST            = "localhost"
@@ -31,7 +31,36 @@ DEFAULT_STEER   = 0.0          # fallback if no camera frame yet
 PRINT_EVERY_N   = 30           # console frames between logs
 # -----------------------------------------------------------------------------
 
+def extract_features(image):
+    h, w, _ = image.shape
+    bottom_half = image[h//2:, :]
+    hsv = cv2.cvtColor(bottom_half, cv2.COLOR_BGR2HSV)
+    lower_green = np.array([40, 40, 40])
+    upper_green = np.array([90, 255, 255])
+    mask = cv2.inRange(hsv, lower_green, upper_green)
 
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours:
+        return None, mask, bottom_half, None
+    largest = max(contours, key=cv2.contourArea)
+    [vx, vy, x, y] = cv2.fitLine(largest, cv2.DIST_L2, 0, 0.01, 0.01)
+    angle = -np.degrees(np.arctan2(vx, vy))
+
+    vis_img = bottom_half.copy()
+    lefty = int((-x * vy / vx) + y)
+    righty = int(((vis_img.shape[1] - x) * vy / vx) + y)
+    cv2.line(vis_img, (vis_img.shape[1] - 1, righty), (0, lefty), (0, 0, 255), 3)
+    # Draw center vertical blue line
+    center_x = vis_img.shape[1] // 2
+    cv2.line(vis_img, (center_x, 0), (center_x, vis_img.shape[0]-1), (255, 0, 0), 2)
+    # Find green lane center (mean x of green pixels)
+    green_coords = np.column_stack(np.where(mask > 0))
+    if green_coords.size == 0:
+        lane_center = None
+    else:
+        # green_coords[:,1] is the x axis
+        lane_center = int(np.mean(green_coords[:,1]))
+    return angle, mask, vis_img, lane_center
 # ------------------------------------------------------------------ STUDENTS --
 def predict_steering(img):
     """
@@ -49,7 +78,7 @@ def predict_steering(img):
     """
     # -------------- load the model only once ---------------------------
     if not hasattr(predict_steering, "_model"):
-    model_path = "svm_model.joblib"
+        model_path = "svm_model.joblib"
         if not os.path.isfile(model_path):
             print(f"SVM file '{model_path}' not found – "
                     f"only random steering will be used.")
