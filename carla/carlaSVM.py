@@ -116,14 +116,11 @@ import numpy as np
 import os
 
 
-
 # HSV color ranges
 
 lower_green = np.array([40, 50, 50])
 
 upper_green = np.array([80, 255, 255])
-
-
 
 lower_blue = np.array([85, 10, 150])
 
@@ -174,35 +171,6 @@ PRINT_EVERY_N   = 30           # console frames between logs
 # ------------------------------------------------------------------ STUDENTS --
 
 def predict_steering(img):
-
-    """
-
-    Returns random steering for the vehicle should be replaced by the prediciton of the model
-
-
-
-    Parameters
-
-    ----------
-
-    img : carla.Image
-
-        The latest RGB camera frame (BGRA byte-buffer).
-
-
-
-    Returns
-
-    -------
-
-    float
-
-        Random value in [-1, 1] – the car still drives randomly.
-
-    """
-
-    # -------------- load the model only once ---------------------------
-
     if not hasattr(predict_steering, "_model"):
 
         model_path = "svm_model.joblib"
@@ -220,9 +188,6 @@ def predict_steering(img):
             predict_steering._model = joblib.load(model_path)
 
             print(f"[INFO] Loaded SVM from '{model_path}'")
-
-
-
     # Convert CARLA image to NumPy array
 
     img_np = np.frombuffer(img.raw_data, dtype=np.uint8)
@@ -257,19 +222,11 @@ def predict_steering(img):
 
     # Crop bottom quarter
 
-    height, width = combined_mask.shape
-
-    bottom_quarter = combined_mask[int(height * 0.75):, :]
-
-
-
-    # Resize to 64x64 and flatten
-
-    resized = cv2.resize(bottom_quarter, (128, 128))
-
-    features = resized.flatten()
-
-    features = features.reshape(1, -1)
+    height, width = img_bgr.shape[:2]
+    bottom_half = img_bgr[height//2:, :]
+    features = bottom_half.flatten().reshape(1, -1)
+    feature_value = bottom_half.mean()  
+    features = np.array([[feature_value]])  
 
 
 
@@ -292,21 +249,11 @@ def predict_steering(img):
 
 
         pred_clipped = pred_to_steer_value.get(pred, 0.0)
-
-
-
-
-
-
-
-        # The output should be then used as return of the function
-
         print(f"SVM steering prediction: {pred_clipped:.3f}")
 
 
 
     # Random return is just a placeholder and should be replaced by the output from the model
-
     return pred_clipped
 
 # -----------------------------------------------------------------------------
