@@ -30,12 +30,13 @@ THROTTLE        = 0.5          # constant forward throttle (0..1)
 DEFAULT_STEER   = 0.0          # fallback if no camera frame yet
 PRINT_EVERY_N   = 30           # console frames between logs
 # -----------------------------------------------------------------------------
-# Convert CARLA image to OpenCV BGR image
 def carla_image_to_cv2(img):
     array = np.frombuffer(img.raw_data, dtype=np.uint8)
     array = array.reshape((img.height, img.width, 4))  # BGRA format
     bgr_image = array[:, :, :3]  # Drop alpha channel
     return bgr_image
+
+
 def extract_features(image):
 
     image = carla_image_to_cv2(image)
@@ -51,40 +52,26 @@ def extract_features(image):
     if not contours:
         return None, mask, bottom_half, None
     largest = max(contours, key=cv2.contourArea)
-    [vx, vy, x, y] = cv2.fitLine(largest, cv2.DIST_L2, 0, 0.01, 0.01)
+    vx, vy, x, y = cv2.fitLine(largest, cv2.DIST_L2, 0, 0.01, 0.01)
+    
+    vx, vy, x, y = [float(i.squeeze()) for i in [vx, vy, x, y]]
     angle = -np.degrees(np.arctan2(vx, vy))
 
     vis_img = bottom_half.copy()
     lefty = int((-x * vy / vx) + y)
     righty = int(((vis_img.shape[1] - x) * vy / vx) + y)
-    cv2.line(vis_img, (vis_img.shape[1] - 1, righty), (0, lefty), (0, 0, 255), 3)
-    # Draw center vertical blue line
+    
     center_x = vis_img.shape[1] // 2
+    cv2.line(vis_img, (vis_img.shape[1] - 1, righty), (0, lefty), (0, 0, 255), 3)
     cv2.line(vis_img, (center_x, 0), (center_x, vis_img.shape[0]-1), (255, 0, 0), 2)
-    # Find green lane center (mean x of green pixels)
     green_coords = np.column_stack(np.where(mask > 0))
     if green_coords.size == 0:
         lane_center = None
     else:
-        # green_coords[:,1] is the x axis
         lane_center = int(np.mean(green_coords[:,1]))
     return angle, mask, vis_img, lane_center
 # ------------------------------------------------------------------ STUDENTS --
 def predict_steering(img):
-    """
-    Returns random steering for the vehicle should be replaced by the prediciton of the model
-
-    Parameters
-    ----------
-    img : carla.Image
-        The latest RGB camera frame (BGRA byte-buffer).
-
-    Returns
-    -------
-    float
-        Random value in [-1, 1] – the car still drives randomly.
-    """
-    # -------------- load the model only once ---------------------------
     if not hasattr(predict_steering, "_model"):
         model_path = "svm_model.joblib"
         if not os.path.isfile(model_path):
@@ -97,7 +84,7 @@ def predict_steering(img):
 
     model = predict_steering._model
     if model is not None:
-        features = extract_features(img)  # You must define extract_features for your use-case
+        features = extract_features(img)  
     try:
         pred = float(model.predict(features)[0])
     except Exception as e:
@@ -106,10 +93,10 @@ def predict_steering(img):
 
     if pred > 0.0:
         return 0.1
-    elif pred < 0:
-        return -1
+    elif pred < 0.0:
+        return -1.0
     else:
-        return 0
+        return 0.0
     
 # -----------------------------------------------------------------------------
 
