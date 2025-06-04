@@ -48,12 +48,11 @@ def predict_steering(img):
         Random value in [-1, 1] – the car still drives randomly.
     """
     # -------------- load the model only once ---------------------------
- 
     if not hasattr(predict_steering, "_model"):
-        model_path = "svm_model.joblib"
+    model_path = "svm_model.joblib"
         if not os.path.isfile(model_path):
             print(f"SVM file '{model_path}' not found – "
-                  f"only random steering will be used.")
+                    f"only random steering will be used.")
             predict_steering._model = None
         else:
             predict_steering._model = joblib.load(model_path)
@@ -62,24 +61,20 @@ def predict_steering(img):
     model = predict_steering._model
     if model is not None:
         features = extract_features(img)  # You must define extract_features for your use-case
-        try:
-            pred = float(model.predict(features)[0])
-        except Exception as e:
-            pred = 0.0
-            print(f" SVM predict failed: {e}")
+    try:
+        pred = float(model.predict(features)[0])
+    except Exception as e:
+        pred = 0.0
+        print(f" SVM predict failed: {e}")
 
-        if pred > 0:
-            return 1
-        elif pred < 0:
-            return -1
-        else:
-            return 0
-
-    return random.choice([-1, 0, 1])
+    if pred > 0.0:
+        return 0.1
+    elif pred < 0:
+        return -1
+    else:
+        return 0
+    
 # -----------------------------------------------------------------------------
-
-
-
 
 
 # ---------------------------- UTILITIES --------------------------------------
