@@ -27,7 +27,7 @@ THROTTLE        = 0.5
 DEFAULT_STEER   = 0.0
 PRINT_EVERY_N   = 30
 MODEL_PATH      = "GroupB_Updated_SVM.joblib"   
-IMAGE_SIZE      = (128, 128)
+IMAGE_SIZE      = (64, 64)
 # -----------------------------------------------------------------------------
 def predict_steering(img):
     if not hasattr(predict_steering, "_model"):
